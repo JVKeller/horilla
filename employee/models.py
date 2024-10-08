@@ -631,7 +631,14 @@ class EmployeeWorkInformation(models.Model):
         self.save()
         return self
 
-
+    def next_anniversary(self):
+        today = datetime.now().date()
+        anniversary = self.date_joining.replace(year=today.year)
+        if anniversary < today:
+            anniversary = anniversary.replace(year=today.year + 1)
+        return anniversary
+    
+    
 class EmployeeBankDetails(HorillaModel):
     """
     EmployeeBankDetails model

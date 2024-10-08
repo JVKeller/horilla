@@ -61,6 +61,7 @@ RESET_BASED = [
     ("yearly", _("Yearly")),
     ("monthly", _("Monthly")),
     ("weekly", _("Weekly")),
+    ("anniversary", _("Anniversary")),  # New option
 ]
 MONTHS = [
     ("1", _("Jan")),
@@ -288,6 +289,13 @@ class LeaveType(HorillaModel):
     def __str__(self):
         return self.name
 
+    def renew_leave(self, employee):
+        next_anniversary = employee.next_anniversary()
+        today = datetime.now().date()
+        if next_anniversary == today:
+            available_leave = AvailableLeave.objects.get(employee_id=employee, leave_type_id=self)
+            available_leave.available_days = self.total_days
+            available_leave.save()
 
 class Holiday(HorillaModel):
     name = models.CharField(max_length=30, null=False, verbose_name=_("Name"))
@@ -469,25 +477,33 @@ class AvailableLeave(HorillaModel):
         available_leave.available_days = available_leave.leave_type_id.total_days
         return expired_date
 
-    def save(self, *args, **kwargs):
-        # if self.assigned_date == datetime.now().date() or self.assigned_date.date() == datetime.now().date():
-        if self.reset_date is None:
-            # Check whether the reset is enabled
-            if self.leave_type_id.reset:
-                reset_date = self.set_reset_date(
-                    assigned_date=self.assigned_date, available_leave=self
-                )
-                self.reset_date = reset_date
-            # assigning expire date
-            if self.leave_type_id.carryforward_type == "carryforward expire":
-                expired_date = self.set_expired_date(
-                    assigned_date=self.assigned_date, available_leave=self
-                )
-                self.expired_date = expired_date
+def save(self, *args, **kwargs):
+    # if self.assigned_date == datetime.now().date() or self.assigned_date.date() == datetime.now().date():
+    if self.reset_date is None:
+        # Check whether the reset is enabled
+        if self.leave_type_id.reset:
+            reset_date = self.set_reset_date(
+                assigned_date=self.assigned_date, available_leave=self
+            )
+            self.reset_date = reset_date
+        # assigning expire date
+        if self.leave_type_id.carryforward_type == "carryforward expire":
+            expired_date = self.set_expired_date(
+                assigned_date=self.assigned_date, available_leave=self
+            )
+            self.expired_date = expired_date
 
-        self.total_leave_days = max(self.available_days + self.carryforward_days, 0)
-        self.carryforward_days = max(self.carryforward_days, 0)
-        super().save(*args, **kwargs)
+    self.total_leave_days = max(self.available_days + self.carryforward_days, 0)
+    self.carryforward_days = max(self.carryforward_days, 0)
+    
+    # Check if today is the employee's next anniversary date
+    if self.leave_type_id.reset_based == "anniversary":
+            next_anniversary = self.employee_id.next_anniversary()
+            today = datetime.now().date()
+            if next_anniversary == today:
+                self.available_days = self.leave_type_id.total_days
+
+    super().save(*args, **kwargs)
 
 
 def restrict_leaves(restri):
