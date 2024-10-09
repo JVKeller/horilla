@@ -15,10 +15,7 @@
     </div>
 </div>
 {% endif %}
-<section class="oh-wrapper oh-main__topbar" x-data="{searchShow: false}">
-
-
-  </section>
+<section class="oh-wrapper oh-main__topbar" x-data="{searchShow: false}"></section>
 
   <div class="oh-wrapper d-flex justify-content-center">
     <div class="oh-onboarding-card">
@@ -340,6 +337,17 @@
                 reset_month.hide().prop('required', false);
                 reset_month_label.hide()
                 reset_month.val('')
+            }
+            if (value == 'anniversary') {
+                reset_weekend_label.hide()
+                reset_weekend.hide().prop('required', false);
+                reset_weekend.val('')
+                reset_month.hide().prop('required', false);
+                reset_month_label.hide()
+                reset_month.val('')
+                reset_day.hide().prop('required', false);
+                reset_day_label.hide()
+                reset_day.val('')
             }
             if (value == '') {
                 reset_month.hide().prop('required', false);
