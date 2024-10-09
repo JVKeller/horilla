@@ -265,6 +265,9 @@ class LeaveType(HorillaModel):
             target_weekday = WEEK_DAYS[self.reset_day]
             days_until_reset = (target_weekday - today.weekday()) % 7 or 7
             reset_date = today + timedelta(days=days_until_reset)
+            
+        elif self.reset_based == "anniversary":
+            reset_date = None
 
         else:
             reset_date = None
