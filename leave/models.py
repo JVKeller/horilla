@@ -182,6 +182,7 @@ class LeaveType(HorillaModel):
     reset_weekend = models.CharField(
         max_length=10, null=True, blank=True, choices=WEEK_DAYS
     )
+    reset_anniversary = models.BooleanField(default=False)
     carryforward_type = models.CharField(
         max_length=30, choices=CARRYFORWARD_TYPE, default="no carryforward"
     )
