@@ -184,6 +184,7 @@ class LeaveTypeForm(ConditionForm):
             "color": TextInput(attrs={"type": "color", "style": "height:40px;"}),
             "period_in": forms.HiddenInput(),
             "total_days": forms.HiddenInput(),
+            "reset_based": forms.Select(choices=RESET_BASED),
         }
 
     def clean(self):
