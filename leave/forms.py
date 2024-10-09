@@ -41,9 +41,10 @@ from leave.models import (
     LeaveRequest,
     LeaverequestComment,
     LeaverequestFile,
-    LeaveType,
+    LeaveType, reset_based,
     RestrictLeave,
 )
+from .models import LeaveType, reset_based  # Import reset_based
 
 CHOICES = [("yes", _("Yes")), ("no", _("No"))]
 LEAVE_MAX_LIMIT = 1e5
@@ -184,7 +185,7 @@ class LeaveTypeForm(ConditionForm):
             "color": TextInput(attrs={"type": "color", "style": "height:40px;"}),
             "period_in": forms.HiddenInput(),
             "total_days": forms.HiddenInput(),
-            "reset_based": forms.Select(choices=RESET_BASED),
+            "reset_based": forms.Select(choices=reset_based),
         }
 
     def clean(self):
