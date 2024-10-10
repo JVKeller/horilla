@@ -15,7 +15,16 @@
     </div>
 </div>
 {% endif %}
-<section class="oh-wrapper oh-main__topbar" x-data="{searchShow: false}"></section>
+<section class="oh-wrapper oh-main__topbar" x-data="{searchShow: false}">
+    <div class="oh-main__titlebar oh-main__titlebar--left">
+        <form action="{% url 'type-view' %}">
+            <button class="oh-btn oh-btn--secondary oh-btn--shadow">
+                {% trans "View Leave Types" %}
+            </button>
+        </form>
+    </div>
+
+  </section>
 
   <div class="oh-wrapper d-flex justify-content-center">
     <div class="oh-onboarding-card">
@@ -103,8 +112,8 @@
                                 <label for="id_reset_based" class="oh-label">{% trans "Reset Period" %}</label>
                                 <span id="reset_based_id" class=" oh-info me-3"title="{% trans "The time period for the leave to reset." %}"></span>
                             </div>
-                            {{ form.reset_based }}
-                            {{ form.reset_based.errors }}
+                            {{form.reset_based}}
+                            {{form.reset_based.errors}}
                         </div>
                     </div>
                     <div class="col-sm-12 col-md-12 ">
