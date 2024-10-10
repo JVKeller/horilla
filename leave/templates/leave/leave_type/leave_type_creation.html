@@ -271,6 +271,8 @@
         var reset_day = $("#id_reset_day");
         var reset_weekend = $("#id_reset_weekend");
         var reset_weekend_label = $("label[for='id_reset_weekend']");
+        var reset_anniversary = $("#reset_anniversary");
+        var reset_anniversary = $("label[for='id_reset_anniversary']");
         var carryforward_type = $("#id_carryforward_type");
         var carryforward_max_label = $("label[for='id_carryforward_max']");
         var carryforward_max = $("#id_carryforward_max");
@@ -291,8 +293,10 @@
         reset_month.hide().prop('required', false);
         reset_day_label.hide();
         reset_day.hide().prop('required', false);
-        reset_weekend.hide().prop('required', false);;
+        reset_weekend.hide().prop('required', false);
         reset_weekend_label.hide();
+        reset_anniversary.hide().prop('required', false);
+        reset_anniversary.hide();
         carryforward_max_label.hide();
         carryforward_max.hide().prop('required', false);
         carryforward_expire_in_label.hide();
@@ -302,8 +306,29 @@
 
         // Check value of reset change field and trigger action
         reset.change(function () {
-            (this.checked) ? (reset_based.show().prop('required', true), reset_based_label.show()) : (reset_based_label.hide(), reset_based.hide().prop('required', false), reset_based.val('')),reset_based_span.show()
-            reset_based.is(':hidden') ? (reset_month_label.hide(), reset_month.hide().prop('required', false), reset_month.val(''), reset_day_label.hide(), reset_day.val(''), reset_day.hide().prop('required', false), reset_weekend_label.hide(),reset_based_span.hide(), reset_weekend.hide().prop('required', false), reset_weekend.val('')) : ""
+            if (this.checked) {
+                reset_based.show().prop('required', true);
+                reset_based_label.show();
+                reset_based_span.show();
+            } else {
+                reset_based_label.hide();
+                reset_based.hide().prop('required', false);
+                reset_based.val('');
+                reset_based_span.show();
+            }
+        
+            if (reset_based.is(':hidden')) {
+                reset_month_label.hide();
+                reset_month.hide().prop('required', false);
+                reset_month.val('');
+                reset_day_label.hide();
+                reset_day.hide().prop('required', false);
+                reset_day.val('');
+                reset_weekend_label.hide();
+                reset_weekend.hide().prop('required', false);
+                reset_weekend.val('');
+                reset_based_span.hide();
+            }
         });
 
         limitLeave.change(function (){
@@ -344,23 +369,26 @@
                 reset_month.val('')
             }
             if (value == 'anniversary') {
-                reset_weekend_label.hide()
+                reset_weekend_label.hide();
                 reset_weekend.hide().prop('required', false);
-                reset_weekend.val('')
+                reset_weekend.val('');
+                reset_month_label.hide();
                 reset_month.hide().prop('required', false);
-                reset_month_label.hide()
-                reset_month.val('')
+                reset_month.val('');
+                reset_day_label.hide();
                 reset_day.hide().prop('required', false);
-                reset_day_label.hide()
-                reset_day.val('')
+                reset_day.val('');
             }
             if (value == '') {
+                reset_weekend_label.hide();
+                reset_weekend.hide().prop('required', false);
+                reset_weekend.val('');
+                reset_month_label.hide();
                 reset_month.hide().prop('required', false);
-                reset_month_label.hide()
-                reset_month.val('')
+                reset_month.val('');
+                reset_day_label.hide();
                 reset_day.hide().prop('required', false);
-                reset_day_label.hide()
-                reset_day.val('')
+                reset_day.val('');
             }
         });
 
