@@ -8,7 +8,9 @@ WORKDIR /app/
 
 COPY . .
 
-RUN chmod +x /app/entrypoint.sh
+# RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint1.sh
+RUN chmod +x /app/entrypoint2.sh
 
 RUN pip install -r requirements.txt
 
