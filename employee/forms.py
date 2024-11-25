@@ -276,6 +276,7 @@ class EmployeeWorkInformationForm(ModelForm):
         widgets = {
             "date_joining": DateInput(attrs={"type": "date"}),
             "contract_end_date": DateInput(attrs={"type": "date"}),
+            "anniversary_date": DateInput(attrs={"type": "date"}),
         }
 
     def __init__(self, *args, disable=False, **kwargs):
@@ -299,6 +300,7 @@ class EmployeeWorkInformationForm(ModelForm):
             "Work Type": "work_type",
             "Employee Type": "employee_type",
             "Shift": "employee_shift",
+            "Anniversary Date" : "anniversary_date"
         }
         urls = {
             "Department": "#dynamicDept",
@@ -359,6 +361,7 @@ class EmployeeWorkInformationUpdateForm(ModelForm):
         widgets = {
             "date_joining": DateInput(attrs={"type": "date"}),
             "contract_end_date": DateInput(attrs={"type": "date"}),
+            "anniversary_joining": DateInput(attrs={"type": "date"}),
         }
 
 
@@ -444,6 +447,7 @@ excel_columns = [
     ("employee_work_info__employee_type_id", trans("Employee Type")),
     ("employee_work_info__location", trans("Work Location")),
     ("employee_work_info__date_joining", trans("Date Joining")),
+    ("employee_work_info__Anniversary__date", trans("Avviversary Date")),
     ("employee_work_info__company_id", trans("Company")),
     ("employee_bank_details__bank_name", trans("Bank Name")),
     ("employee_bank_details__branch", trans("Branch")),
@@ -478,6 +482,7 @@ class EmployeeExportExcelForm(forms.Form):
             "gender",
             "employee_work_info__department_id",
             "employee_work_info__job_position_id",
+            "employee_work_info__anniversary_date",
             "employee_work_info__job_role_id",
             "employee_work_info__shift_id",
             "employee_work_info__work_type_id",

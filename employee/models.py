@@ -518,7 +518,7 @@ class EmployeeTag(HorillaModel):
         return f"{self.title}"
 
 
-class EmployeeWorkInformation(models.Model):
+ 
     """
     EmployeeWorkInformation model
     """
@@ -605,6 +605,7 @@ class EmployeeWorkInformation(models.Model):
     date_joining = models.DateField(
         null=True, blank=True, verbose_name=_("Joining Date")
     )
+    anniversary_date = models.DateField(null=True, blank=True) #Adding anniversary Date
     contract_end_date = models.DateField(blank=True, null=True)
     basic_salary = models.IntegerField(
         null=True, blank=True, default=0, verbose_name=_("Basic Salary")
