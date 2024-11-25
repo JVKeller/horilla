@@ -10,7 +10,7 @@ WORKDIR /app/
 
 COPY . .
 
-# RUN chmod +x /app/entrypoint.sh
+# Fix line return from windows
 RUN sed -i -e 's/\r$//' entrypoint.sh
 RUN sed -i -e 's/\r$//' entrypoint1.sh
 RUN sed -i -e 's/\r$//' entrypoint2.sh
