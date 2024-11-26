@@ -447,7 +447,7 @@ excel_columns = [
     ("employee_work_info__employee_type_id", trans("Employee Type")),
     ("employee_work_info__location", trans("Work Location")),
     ("employee_work_info__date_joining", trans("Date Joining")),
-    ("employee_work_info__Anniversary__date", trans("Avviversary Date")),
+    ("employee_work_info__anniversary__date", trans("Anniversary Date")),
     ("employee_work_info__company_id", trans("Company")),
     ("employee_bank_details__bank_name", trans("Bank Name")),
     ("employee_bank_details__branch", trans("Branch")),

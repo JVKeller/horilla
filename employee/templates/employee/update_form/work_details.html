@@ -233,10 +233,13 @@
           </div>
           <div class="col-12 col-sm-12 col-md-12 col-lg-6">
             <div class="oh-input-group">
-              <label class="oh-label" for="{{work_form.tags.id_for_label}}"
-                >{% trans "Employee Tag" %}</label
+              <label
+                class="oh-label"
+                for="{{work_form.anniversary_date.id_for_label}}"
+                for="endDate"
+                >{% trans "Anniversary Date" %}</label
               >
-              {{work_form.tags}}
+              {{work_form.anniversary_date}}
             </div>
           </div>
         </div>
@@ -260,6 +263,14 @@
                 >{% trans "Salary Per Hour" %}</label
               >
               {{work_form.salary_hour}}
+            </div>
+          </div>
+          <div class="col-12 col-sm-12 col-md-12 col-lg-6">
+            <div class="oh-input-group">
+              <label class="oh-label" for="{{work_form.tags.id_for_label}}"
+                >{% trans "Employee Tag" %}</label
+              >
+              {{work_form.tags}}
             </div>
           </div>
         </div>
