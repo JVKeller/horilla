@@ -27,6 +27,7 @@ from base.forms import PenaltyAccountForm
 from base.methods import (
     choosesubordinates,
     closest_numbers,
+    eval_validate,
     export_data,
     filtersubordinates,
     get_key_instances,
@@ -490,13 +491,22 @@ def leave_request_creation(request, type_id=None, emp_id=None):
             leave_requests = LeaveRequest.objects.all()
             if len(leave_requests) == 1:
                 return HttpResponse("<script>window.location.reload()</script>")
-
+    referrer = request.META.get("HTTP_REFERER", "")
+    referrer = "/" + "/".join(referrer.split("/")[3:])
+    if referrer == "/":
+        hx_url = reverse("leave-request-and-approve")
+        hx_target = "#leaveApproveCardBody"
+    else:
+        hx_url = "/leave/request-filter?"
+        hx_target = "#leaveRequest"
     return render(
         request,
         "leave/leave_request/leave_request_form.html",
         {
             "form": form,
             "pd": previous_data,
+            "hx_url": hx_url,
+            "hx_target": hx_target,
         },
     )
 
@@ -4727,7 +4737,7 @@ if apps.is_installed("attendance"):
         comp_leave_req = CompensatoryLeaveRequest.objects.get(id=comp_leave_id)
         context = {
             "comp_leave_req": comp_leave_req,
-            "my_request": eval(request.GET.get("my_request")),
+            "my_request": eval_validate(request.GET.get("my_request")),
             "instances_ids": requests_ids_json,
             "previous": previous_id,
             "next": next_id,

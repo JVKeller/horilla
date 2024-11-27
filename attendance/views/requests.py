@@ -33,6 +33,7 @@ from attendance.views.clock_in_out import early_out, late_come
 from base.methods import (
     choosesubordinates,
     closest_numbers,
+    eval_validate,
     filtersubordinates,
     get_key_instances,
     is_reportingmanager,
@@ -131,14 +132,13 @@ def request_new(request):
     This method is used to create new attendance requests
     """
 
-    if request.GET.get("bulk") and eval(request.GET.get("bulk")):
+    if request.GET.get("bulk") and eval_validate(request.GET.get("bulk")):
         employee = request.user.employee_get
         form = BulkAttendanceRequestForm(initial={"employee_id": employee})
         if request.method == "POST":
             form = BulkAttendanceRequestForm(request.POST)
             form.instance.attendance_clock_in_date = request.POST.get("from_date")
             form.instance.attendance_date = request.POST.get("from_date")
-
             if form.is_valid():
                 instance = form.save(commit=False)
                 messages.success(request, _("Attendance request created"))
@@ -759,7 +759,7 @@ def get_employee_shift(request):
         employee = Employee.objects.get(id=employee_id)
         shift = employee.get_shift
     form = NewRequestForm()
-    if request.GET.get("bulk") and eval(request.GET.get("bulk")):
+    if request.GET.get("bulk") and eval_validate(request.GET.get("bulk")):
         form = BulkAttendanceRequestForm()
     form.fields["shift_id"].queryset = EmployeeShift.objects.all()
     form.fields["shift_id"].widget.attrs["hx-trigger"] = "load,change"
