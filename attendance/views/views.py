@@ -90,6 +90,7 @@ from attendance.models import (
     AttendanceRequestComment,
     AttendanceRequestFile,
     AttendanceValidationCondition,
+    BatchAttendance,
     GraceTime,
     WorkRecords,
 )
@@ -103,6 +104,7 @@ from base.forms import (
 from base.methods import (
     choosesubordinates,
     closest_numbers,
+    eval_validate,
     export_data,
     filtersubordinates,
     get_key_instances,
@@ -1477,6 +1479,42 @@ def approve_bulk_overtime(request):
 
 
 @login_required
+# @manager_can_enter("attendance.change_attendance")
+def attendance_add_to_batch(request):
+    """
+    This method is used to add attendance to a batch
+    """
+    batches = BatchAttendance.objects.all()
+    ids = request.GET.getlist("ids")
+    if request.method == "POST":
+        ids = request.GET["ids"]
+        # Remove brackets and quotes, then split and convert to integers
+        int_ids = [int(x.strip().strip("'")) for x in ids.strip("[]").split(",")]
+        batch_id = request.POST.get("batch_attendance_id")
+        if batch_id:
+            batch = BatchAttendance.objects.filter(id=batch_id).first()
+            for id in int_ids:
+                try:
+                    attendance_req = Attendance.objects.filter(id=id).first()
+                    attendance_req.batch_attendance_id = batch
+                    attendance_req.save()
+                except Exception as e:
+                    logger.error(e)
+                    messages.error(request, _("Something went wrong."))
+                    return HttpResponse("<script>window.location.reload()</script>")
+            messages.success(request, _(f"Attendances added to {batch}."))
+            return HttpResponse("<script>window.location.reload()</script>")
+        else:
+            messages.error(request, _("Something went wrong."))
+            return HttpResponse("<script>window.location.reload()</script>")
+    return render(
+        request,
+        "attendance/attendance/attendance_add_batch.html",
+        {"batches": batches, "ids": ids},
+    )
+
+
+@login_required
 @hx_request_required
 def update_fields_based_shift(request):
     shift_id = request.GET.get("shift_id")
@@ -1865,7 +1903,7 @@ def create_grace_time(request):
     Returns:
     GET : return grace time form template
     """
-    is_default = eval(request.GET.get("default"))
+    is_default = eval_validate(request.GET.get("default"))
     form = GraceTimeForm(initial={"is_default": is_default})
     if request.method == "POST":
         form = GraceTimeForm(request.POST)
@@ -2657,7 +2695,7 @@ def delete_allowed_ips(request):
         allowed_ips = AttendanceAllowedIP.objects.first()
         ips = allowed_ips.additional_data["allowed_ips"]
         for id in ids:
-            ips.pop(eval(id))
+            ips.pop(eval_validate(id))
 
         allowed_ips.additional_data["allowed_ips"] = ips
         allowed_ips.save()
