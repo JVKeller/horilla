@@ -11,7 +11,7 @@ WORKDIR /app/
 COPY . .
 
 # Fix line return from windows
-RUN sed -i -e 's/\r$//' entrypoint.sh
+#RUN sed -i -e 's/\r$//' entrypoint.sh
 #RUN sed -i -e 's/\r$//' entrypoint1.sh
 #RUN sed -i -e 's/\r$//' entrypoint2.sh
 
@@ -21,4 +21,4 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8090
 
-CMD ["python3", "manage.py", "runserver"]
+# CMD ["python3", "manage.py", "runserver"]
