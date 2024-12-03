@@ -517,7 +517,14 @@ class EmployeeTag(HorillaModel):
     def __str__(self) -> str:
         return f"{self.title}"
 
-
+    # Change the self-referential field to use string reference
+    parent = models.ForeignKey(
+        'self',  # Use 'self' instead of EmployeeTag
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name=_("Employee tag")
+    )
  
     """
     EmployeeWorkInformation model
