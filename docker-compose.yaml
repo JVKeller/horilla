@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8090:8090
+      - 8080:8080
     restart: unless-stopped
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@db:5454/horilla"
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/horilla"
     command: ./entrypoint.sh
     depends_on:
       db:
@@ -20,7 +20,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - 5454:5454
+      - 5432:5432
     restart: unless-stopped
     volumes:
       - horilla-data:/var/lib/postgresql/data
