@@ -14,4 +14,4 @@ python3 manage.py createhorillauser \
     --email "admin@example.com" \
     --phone "1234567890"
 
-gunicorn --bind "0.0.0.0:8000" horilla.wsgi:application
+gunicorn --bind "0.0.0.0:8090" horilla.wsgi:application
