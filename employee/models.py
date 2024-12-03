@@ -514,17 +514,18 @@ class EmployeeTag(HorillaModel):
     title = models.CharField(max_length=50, null=True, verbose_name=_("Title"))
     color = models.CharField(max_length=30, null=True)
 
-    def __str__(self) -> str:
-        return f"{self.title}"
-
-    # Change the self-referential field to use string reference
+    # Use string literal 'self' instead of direct model reference
     parent = models.ForeignKey(
-        'self',  # Use 'self' instead of EmployeeTag
+        'self',  # Changed from EmployeeTag to 'self'
         on_delete=models.PROTECT,
         null=True,
-        blank=True,
+        blank=True, 
         verbose_name=_("Employee tag")
     )
+    title = models.CharField(max_length=100)
+    
+    def __str__(self) -> str:
+        return f"{self.title}"
  
     """
     EmployeeWorkInformation model
