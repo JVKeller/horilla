@@ -513,17 +513,12 @@ class EmployeeTag(HorillaModel):
 
     title = models.CharField(max_length=50, null=True, verbose_name=_("Title"))
     color = models.CharField(max_length=30, null=True)
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True, 
-        verbose_name=_("Employee tag")
-    )
 
     def __str__(self) -> str:
         return f"{self.title}"
- 
+
+
+class EmployeeWorkInformation(models.Model):
     """
     EmployeeWorkInformation model
     """
@@ -573,7 +568,7 @@ class EmployeeTag(HorillaModel):
     )
     reporting_manager_id = models.ForeignKey(
         Employee,
-        on_delete=models.PROTECT,
+        on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
         related_name="reporting_manager",
