@@ -12,10 +12,10 @@ COPY . .
 
 # Fix line return from windows
 #RUN sed -i -e 's/\r$//' entrypoint.sh
-RUN sed -i -e 's/\r$//' entrypoint1.sh
+# RUN sed -i -e 's/\r$//' entrypoint1.sh
 #RUN sed -i -e 's/\r$//' entrypoint2.sh
 
-RUN chmod +x /app/entrypoint1.sh
+# RUN chmod +x /app/entrypoint1.sh
 
 RUN pip install -r requirements.txt
 
