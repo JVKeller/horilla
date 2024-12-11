@@ -473,7 +473,7 @@ class AvailableLeave(HorillaModel):
             status="approved",
         ).aggregate(total_sum=Sum("requested_days"))
 
-        return int(leave_taken["total_sum"]) if leave_taken["total_sum"] else 0
+        return leave_taken["total_sum"] if leave_taken["total_sum"] else 0
 
     # Setting the expiration date for carryforward leaves
     def set_expired_date(self, available_leave, assigned_date):
@@ -598,6 +598,28 @@ class LeaveRequest(HorillaModel):
 
     def __str__(self):
         return f"{self.employee_id} | {self.leave_type_id} | {self.status}"
+
+    def employees_on_leave_today(today=None, status=None):
+        """
+        Retrieve employees who are on leave on a given date (default is today).
+
+        Args:
+            today (date, optional): The date to check. Defaults to the current date
+                                    in the server's local timezone.
+            status (str, optional): The status to filter leave requests. If None, no filtering by status is applied.
+
+        Returns:
+            QuerySet: A queryset of LeaveRequest instances where employees are on leave on the specified date.
+        """
+        today = date.today() if today is None else today
+        queryset = LeaveRequest.objects.filter(
+            start_date__lte=today, end_date__gte=today
+        )
+
+        if status is not None:
+            queryset = queryset.filter(status=status)
+
+        return queryset
 
     def get_penalties_count(self):
         """
