@@ -363,7 +363,7 @@ class EmployeeWorkInformationUpdateForm(ModelForm):
         widgets = {
             "date_joining": DateInput(attrs={"type": "date"}),
             "contract_end_date": DateInput(attrs={"type": "date"}),
-            "anniversary_joining": DateInput(attrs={"type": "date"}),
+            "anniversary_date": DateInput(attrs={"type": "date"}),
         }
 
 
