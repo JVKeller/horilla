@@ -231,6 +231,7 @@ class LeaveTypeGetCreateSerilaizer(serializers.ModelSerializer):
         reset_day = data.get("reset_day")
         reset_weekday = data.get("reset_weekday")
         carryforward_type = data.get("carryforward_type")
+        reset_on_anniversary_date = data.get("reset_on_anniversary_date")
         carryforward_max = data.get("carryforward_max")
         if reset == True:
             if reset_based == None:
@@ -249,7 +250,14 @@ class LeaveTypeGetCreateSerilaizer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"reset_weekday": ["This field is required."]}
                 )
-            # elif carryforward_type in ['carryforward', 'carryforward expire'] and carryforward_max
+            elif reset_based == "reset_on_anniversary_date" and reset_month == None:
+                raise serializers.ValidationError(
+                    {"reset_month": ["Reset month should be empty when reset on anniversary date is enabled."]}
+            )
+            # elif carryforward_type in ['carryforward', 'carryforward expire'] and carryforward_m is None:
+                raise serializers.ValidationError(
+                    {"carryforward_max": ["This field is required when carryforward is enabled."]}
+                )
         return data
 
 

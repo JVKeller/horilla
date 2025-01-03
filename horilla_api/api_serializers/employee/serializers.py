@@ -169,4 +169,5 @@ class EmployeeSelectorSerializer(serializers.ModelSerializer):
             "employee_last_name",
             "badge_id",
             "employee_profile",
+            "anniversary_date",
         ]
