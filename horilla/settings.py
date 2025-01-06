@@ -27,7 +27,7 @@ env = environ.Env(
     DEBUG=(bool, True),
     SECRET_KEY=(
         str,
-        "django-insecure-j8op9)1q8$1&0^s&p*_0%d#pr@w9qj@1o=3#@d=a(^@9@zd@%j",
+        "django-insecure-j+(-m#q&&0l^(o=15o2ivgs96bk#bs_c(cwxnb+jg!kthqyp!*",
     ),
     ALLOWED_HOSTS=(list, ["*"]),
     CSRF_TRUSTED_ORIGINS=(list, ["http://localhost:8000"]),
@@ -222,7 +222,7 @@ LOCALE_PATHS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "Asia/Kolkata"
+TIME_ZONE = "America/NewYork"
 
 USE_I18N = True
 
