@@ -27,7 +27,6 @@ env = environ.Env(
     DEBUG=(bool, True),
     SECRET_KEY=(
         str,
-        "django-insecure-j+(-m#q&&0l^(o=15o2ivgs96bk#bs_c(cwxnb+jg!kthqyp!*",
         "django-insecure-j8op9)1q8$1&0^s&p*_0%d#pr@w9qj@1o=3#@d=a(^@9@zd@%j",        
     ),
     ALLOWED_HOSTS=(list, ["*"]),
