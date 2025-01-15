@@ -178,7 +178,7 @@ class LeaveType(HorillaModel):
         blank=True,
         null=True,
     )
-    reset_on_anniversary_date = models.CharField(max_length=30, default=True, blank=True)
+    reset_on_anniversary_date = models.BooleanField(default=True)
     reset_month = models.CharField(max_length=30, choices=MONTHS, blank=True)
     reset_day = models.CharField(max_length=30, choices=DAYS, null=True, blank=True)
     reset_weekend = models.CharField(
@@ -241,14 +241,18 @@ class LeaveType(HorillaModel):
                 else int(day)
             )
 
-        if self.reset_based == 'anniversary' and employee_id:
-            work_info = EmployeeWorkInformation.objects.filter(
-                employee_id=employee_id
-            ).first()
+        if (
+            self.reset_based == 'anniversary' 
+            and employee_id
+        ):
+            work_info = EmployeeWorkInformation.objects.filter(employee_id=employee_id).first()
             if work_info and work_info.anniversary_date:
-                today = date.today()
+                current_date = date.today()
+                anniversary = work_info.anniversary_date.replace(year=current_date.year)
+                if anniversary < current_date:
+                    anniversary = anniversary.replace(year=current_date.year + 1)
                 anniversary = work_info.anniversary_date.replace(year=today.year)
-                if anniversary < today:
+                if anniversary and anniversary < today:
                     anniversary = anniversary.replace(year=today.year + 1)
                 return anniversary
         
@@ -404,66 +408,54 @@ class AvailableLeave(HorillaModel):
     # Setting the reset date for carryforward leaves
 
     def set_reset_date(self, assigned_date, available_leave):
-        if available_leave.leave_type_id.reset_based == "anniversary":
-            work_info = EmployeeWorkInformation.objects.filter(employee_id=available_leave.employee_id).first()
-            if work_info:
-                reset_date = work_info.anniversary_date
-                assignd_date = work_info.anniversary_date
-
-        elif available_leave.leave_type_id.reset_based == "monthly":
-            reset_day = available_leave.leave_type_id.reset_day
-            if reset_day == "last day":
-                temp_date = assigned_date + relativedelta(months=0, day=31)
-                if assigned_date < temp_date:
-                    reset_date = temp_date
-                else:
-                    reset_date = assigned_date + relativedelta(months=1, day=31)
-
-            else:
-                temp_date = assigned_date + relativedelta(months=0, day=int(reset_day))
-                if assigned_date < temp_date:
-                    reset_date = temp_date
-                else:
-                    reset_date = assigned_date + relativedelta(
-                        months=1, day=int(reset_day)
-                    )
-
-        elif available_leave.leave_type_id.reset_based == "weekly":
-            temp = 7 - (
-                assigned_date.isoweekday()
-                - int(available_leave.leave_type_id.reset_weekend)
-                - 1
-            )
-            if temp != 7:
-                reset_date = assigned_date + relativedelta(days=(temp % 7))
-            else:
-                reset_date = assigned_date + relativedelta(days=7)
+        reset_based = available_leave.leave_type_id.reset_based
+        if reset_based == "anniversary":
+            return self._get_anniversary_reset_date(assigned_date, available_leave)
+        elif reset_based == "monthly":
+            return self._get_monthly_reset_date(assigned_date, available_leave)
+        elif reset_based == "weekly":
+            return self._get_weekly_reset_date(assigned_date, available_leave)
         else:
-            reset_month = int(available_leave.leave_type_id.reset_month)
-            reset_day = available_leave.leave_type_id.reset_day
+            return self._get_yearly_reset_date(assigned_date, available_leave)
 
-            if reset_day == "last day":
-                temp_date = assigned_date + relativedelta(
-                    years=0, month=reset_month, day=31
-                )
-                if assigned_date < temp_date:
-                    reset_date = temp_date
-                else:
-                    reset_date = assigned_date + relativedelta(
-                        years=1, month=reset_month, day=31
-                    )
-            else:
-                temp_date = assigned_date + relativedelta(
-                    years=0, month=reset_month, day=int(reset_day)
-                )
-                if assigned_date < temp_date:
-                    reset_date = temp_date
-                else:
-                    # nth_day = int(reset_day)
-                    reset_date = assigned_date + relativedelta(
-                        years=1, month=reset_month, day=int(reset_day)
-                    )
+    def _get_anniversary_reset_date(self, assigned_date, available_leave):
+        work_info = EmployeeWorkInformation.objects.filter(employee_id=available_leave.employee_id).first()
+        if work_info:
+            return work_info.anniversary_date
+        return assigned_date
 
+    def _get_monthly_reset_date(self, assigned_date, available_leave):
+        reset_day = available_leave.leave_type_id.reset_day
+        if reset_day == "last day":
+            temp_date = assigned_date + relativedelta(months=0, day=31)
+            if assigned_date < temp_date:
+                return temp_date
+            return assigned_date + relativedelta(months=1, day=31)
+        else:
+            temp_date = assigned_date + relativedelta(months=0, day=int(reset_day))
+            if assigned_date < temp_date:
+                return temp_date
+            return assigned_date + relativedelta(months=1, day=int(reset_day))
+
+    def _get_weekly_reset_date(self, assigned_date, available_leave):
+        temp = 7 - (assigned_date.isoweekday() - int(available_leave.leave_type_id.reset_weekend) - 1)
+        if temp != 7:
+            return assigned_date + relativedelta(days=(temp % 7))
+        return assigned_date + relativedelta(days=7)
+
+    def _get_yearly_reset_date(self, assigned_date, available_leave):
+        reset_month = int(available_leave.leave_type_id.reset_month)
+        reset_day = available_leave.leave_type_id.reset_day
+        if reset_day == "last day":
+            temp_date = assigned_date + relativedelta(years=0, month=reset_month, day=31)
+            if assigned_date < temp_date:
+                return temp_date
+            return assigned_date + relativedelta(years=1, month=reset_month, day=31)
+        else:
+            temp_date = assigned_date + relativedelta(years=0, month=reset_month, day=int(reset_day))
+            if assigned_date < temp_date:
+                return temp_date
+            return assigned_date + relativedelta(years=1, month=reset_month, day=int(reset_day))
         return reset_date
 
     def leave_taken(self):
