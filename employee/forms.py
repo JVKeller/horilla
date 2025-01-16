@@ -285,6 +285,7 @@ class EmployeeWorkInformationForm(ModelForm):
             "email",
             "mobile",
             "date_joining",
+            "anniversary_date",
             "contract_end_date",
             "tags",
             "basic_salary",

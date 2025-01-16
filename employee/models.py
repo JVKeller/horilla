@@ -103,6 +103,7 @@ class Employee(models.Model):
     emergency_contact_name = models.CharField(max_length=20, null=True, blank=True)
     emergency_contact_relation = models.CharField(max_length=20, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    reset_on_anniversary_date = models.BooleanField(default=False)
     additional_info = models.JSONField(null=True, blank=True)
     is_from_onboarding = models.BooleanField(
         default=False, null=True, blank=True, editable=False
@@ -531,7 +532,35 @@ class Employee(models.Model):
             return self.save()
 
         return self
+    
+    def is_work_anniversary(self):
+        """
+        Check if today is the employee's work anniversary
+        """
+        work_info = getattr(self, 'employee_work_info', None)
+        if not work_info or not work_info.anniversary_date:
+            return False
+            
+        today = date.today()
+        return (
+            today.month == work_info.anniversary_date.month 
+            and today.day == work_info.anniversary_date.day
+        )
 
+    def handle_vacation_reset(self):
+        """
+        Reset vacation time on work anniversary
+        """
+        if self.is_work_anniversary():
+            if apps.is_installed("leave"):
+                # Get the LeaveBalance model from the leave app
+                LeaveBalance = apps.get_model('leave', 'LeaveBalance')
+                leave_balances = LeaveBalance.objects.filter(employee_id=self)
+                
+                for balance in leave_balances:
+                    # Reset the balance based on your business rules
+                    balance.reset_on_anniversary()
+                    balance.save()
 
 class EmployeeTag(HorillaModel):
     """
@@ -628,10 +657,10 @@ class EmployeeWorkInformation(models.Model):
         null=True,
         blank=True,
         verbose_name=_("Shift"),
-    )
+    )   
     date_joining = models.DateField(
         null=True, blank=True, verbose_name=_("Joining Date")
-    )
+    )    
     contract_end_date = models.DateField(blank=True, null=True)
     basic_salary = models.IntegerField(
         null=True, blank=True, default=0, verbose_name=_("Basic Salary")
@@ -639,6 +668,7 @@ class EmployeeWorkInformation(models.Model):
     salary_hour = models.IntegerField(
         null=True, blank=True, default=0, verbose_name=_("Salary Per Hour")
     )
+    anniversary_date = models.DateField(null=True, blank=True)
     additional_info = models.JSONField(null=True, blank=True)
     experience = models.FloatField(null=True, blank=True, default=0)
     history = HorillaAuditLog(
@@ -924,12 +954,11 @@ class EmployeeGeneralSetting(HorillaModel):
     company_id = models.ForeignKey(Company, null=True, on_delete=models.CASCADE)
     objects = HorillaCompanyManager("company_id")
 
-
 class ProfileEditFeature(HorillaModel):
     """
     ProfileEditFeature
     """
-
+    created_at = models.DateField(null=True)
     is_enabled = models.BooleanField(default=False)
     objects = models.Manager()
 

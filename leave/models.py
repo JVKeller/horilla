@@ -188,6 +188,7 @@ class LeaveType(HorillaModel):
         max_length=30, choices=CARRYFORWARD_TYPE, default="no carryforward"
     )
     carryforward_max = models.FloatField(null=True, blank=True)
+    carryforward_expire_date = models.DateField(null=True, blank=True)
     carryforward_expire_in = models.IntegerField(null=True, blank=True)
     carryforward_expire_period = models.CharField(
         max_length=30, choices=TIME_PERIOD, null=True, blank=True
