@@ -468,18 +468,30 @@ class AvailableLeave(HorillaModel):
 
         return leave_taken["total_sum"] if leave_taken["total_sum"] else 0
 
-    # Setting the expiration date for carryforward leaves
-    def set_expired_date(self, available_leave, assigned_date):
-        period = available_leave.leave_type_id.carryforward_expire_in
-        if available_leave.leave_type_id.carryforward_expire_period == "day":
-            expired_date = assigned_date + relativedelta(days=period)
-        elif available_leave.leave_type_id.carryforward_expire_period == "month":
-            expired_date = assigned_date + relativedelta(months=period)
+     # Setting the expiration date for carryforward leaves
+    def set_expired_date(self, assigned_date=None, available_leave=None):
+        """Calculate expiry date for carryforward leaves"""
+        # Get period settings based on context
+        if available_leave is None:
+            period = self.carryforward_expire_in
+            period_type = self.carryforward_expire_period
         else:
+            period = available_leave.leave_type_id.carryforward_expire_in
+            period_type = available_leave.leave_type_id.carryforward_expire_period
+        
+        # Calculate expiry date
+        if period_type == "day":
+            expired_date = assigned_date + relativedelta(days=period)
+        elif period_type == "month":
+            expired_date = assigned_date + relativedelta(months=period)
+        else:  # year
             expired_date = assigned_date + relativedelta(years=period)
-
-        available_leave.carryforward_days = 0
-        available_leave.available_days = available_leave.leave_type_id.total_days
+        
+        # Update available leave if provided
+        if available_leave:
+            available_leave.carryforward_days = 0
+            available_leave.available_days = available_leave.leave_type_id.total_days
+            
         return expired_date
 
     def save(self, *args, **kwargs):
