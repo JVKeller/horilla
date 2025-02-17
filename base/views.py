@@ -14,6 +14,7 @@ from os import path
 from urllib.parse import parse_qs, unquote, urlencode
 
 import pandas as pd
+from dateutil import parser
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -24,7 +25,6 @@ from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetVie
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
-from django.core.paginator import Paginator
 from django.db.models import ProtectedError, Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -32,11 +32,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.html import strip_tags
-from django.utils.timezone import localdate
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from accessibility.accessibility import ACCESSBILITY_FEATURE
 from accessibility.models import DefaultAccessibility
 from base.backends import ConfiguredEmailBackend
 from base.decorators import (
@@ -112,18 +112,14 @@ from base.methods import (
     format_date,
     generate_colors,
     get_key_instances,
-    get_pagination,
     is_reportingmanager,
     paginator_qry,
-    random_color_generator,
     sortby,
 )
 from base.models import (
     WEEK_DAYS,
     WEEKS,
-    Announcement,
     AnnouncementExpire,
-    AnnouncementView,
     BaserequestFile,
     BiometricAttendance,
     Company,
@@ -133,7 +129,6 @@ from base.models import (
     DynamicEmailConfiguration,
     DynamicPagination,
     EmployeeShift,
-    EmployeeShiftDay,
     EmployeeShiftSchedule,
     EmployeeType,
     Holidays,
@@ -220,15 +215,15 @@ def initialize_database_condition():
     Returns:
         bool: True if the database needs to be initialized, False otherwise.
     """
-    initialize_database = not User.objects.exists()
-    if not initialize_database:
-        initialize_database = True
+    init_database = not User.objects.exists()
+    if not init_database:
+        init_database = True
         superusers = User.objects.filter(is_superuser=True)
         for user in superusers:
             if hasattr(user, "employee_get"):
-                initialize_database = False
+                init_database = False
                 break
-    return initialize_database
+    return init_database
 
 
 def load_demo_database(request):
@@ -284,9 +279,7 @@ def initialize_database(request):
     if initialize_database_condition():
         if request.method == "POST":
             password = request._post.get("password")
-            from horilla.horilla_settings import DB_INIT_PASSWORD as db_password
-
-            if db_password == password:
+            if DB_INIT_PASSWORD == password:
                 return redirect(initialize_database_user)
             else:
                 messages.warning(
@@ -1313,9 +1306,11 @@ def add_remove_dynamic_fields(request, **kwargs):
             - model (Model): The Django model class used for `ModelChoiceField`.
             - form_class (Form): The Django form class to which dynamic fields will be added.
             - template (str): The template used to render the newly added field.
-            - empty_label (str, optional): The label to show for empty choices in a `ModelChoiceField`.
+            - empty_label (str, optional): The label to show for empty choices in
+                a `ModelChoiceField`.
             - field_name_pre (str): The prefix for the dynamically generated field names.
-            - field_type (str, optional): The type of field to add, either "character" or "model_choice".
+            - field_type (str, optional): The type of field to add, either "character"
+                or "model_choice".
 
     Returns:
         HttpResponse: Returns the HTML for the newly added field, rendered in the context of the
@@ -2931,6 +2926,197 @@ def rotating_shift_assign_export(request):
         form_class=RotatingShiftAssignExportForm,
         file_name="Rotating_shift_assign_export",
     )
+
+
+def normalize_list(lst):
+    return [None if pd.isna(x) else x for x in lst]
+
+
+@login_required
+@manager_can_enter("base.add_rotatingworktypeassign")
+def rotating_shift_assign_import(request):
+    if request.method == "POST":
+        rotating_shift_obj_list = []
+        employee_ids = []
+        rotating_shift_assign_list = []
+        error_list = []
+        new_dicts = {}
+        rotating_shifts = RotatingShift.objects.all()
+        shifts = EmployeeShift.objects.all()
+        file = request.FILES["file"]
+        file_extension = file.name.split(".")[-1].lower()
+        error = False
+        create_rotating_shift = True
+
+        existing_dicts = {
+            rot_shift.id: [
+                shift.employee_shift if shift else None
+                for shift in rot_shift.total_shifts()
+            ]
+            for rot_shift in rotating_shifts
+        }
+        data_frame = (
+            pd.read_csv(file) if file_extension == "csv" else pd.read_excel(file)
+        )
+        work_info_dicts = data_frame.to_dict("records")
+        try:
+            keys_list = list(work_info_dicts[0].keys())
+            error_dict = {key: [] for key in keys_list}
+        except:
+            messages.error(request, "something went wrong....")
+            data_frame = pd.DataFrame(
+                ["Please provide valid data"],
+                columns=["Title Error"],
+            )
+
+            error_count = 1
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="ImportError.csv"'
+
+            data_frame.to_csv(response, index=False)
+            response["X-Error-Count"] = error_count
+            return response
+
+        error_dict["Title Error"] = []
+        error_dict["Employee Error"] = []
+        error_dict["Date Error"] = []
+        if len(keys_list) > 4:
+            start_date = keys_list[3]
+            start_date = parser.parse(str(start_date), dayfirst=True).date()
+
+        for total_rows, row in enumerate(work_info_dicts, start=1):
+            employee_ids.append(row["Badge Id"])
+            current_list = list(row.values())[3:]
+            current_list = normalize_list(current_list)
+            if start_date < datetime.today().date():
+                error_dict["Date Error"] = "Start Date must be greater than today"
+
+            if current_list not in list(
+                existing_dicts.values()
+            ) and current_list not in list(new_dicts.values()):
+                if rotating_shifts.filter(name=row["Title"]).exists():
+                    row["Title Error"] = "Rotating Shift with this Title already exists"
+                    error = True
+                    error_list.append(row)
+                    continue
+
+                rotating_shift_obj = RotatingShift(
+                    name=row["Title"],
+                    shift1=shifts.filter(employee_shift=current_list[0]).first(),
+                    shift2=shifts.filter(employee_shift=current_list[1]).first(),
+                )
+                if current_list[2:]:
+                    additional_data = []
+                    for item in current_list[2:]:
+                        try:
+                            additional_data.append(
+                                shifts.filter(employee_shift=item).first().id
+                            )
+                        except:
+                            additional_data.append(None)
+
+                    rotating_shift_obj.additional_data = {
+                        "additional_shifts": additional_data
+                    }
+                    rotating_shift_obj.save()
+                new_dicts[rotating_shift_obj.id] = current_list
+
+                rotating_shift_obj_list.append(rotating_shift_obj)
+            else:
+                flag = True
+                for rot_shift_id, shift_list in existing_dicts.items():
+                    if shift_list == current_list:
+                        rotating_shift_obj = RotatingShift.objects.get(id=rot_shift_id)
+                        rotating_shift_obj_list.append(rotating_shift_obj)
+                        flag = False
+                        break
+                if flag:
+                    for rot_shift_id, shift_list in new_dicts.items():
+                        if shift_list == current_list:
+                            rotating_shift_obj = RotatingShift.objects.get(
+                                id=rot_shift_id
+                            )
+                            rotating_shift_obj_list.append(rotating_shift_obj)
+                            break
+
+        employee_list = Employee.objects.filter(badge_id__in=employee_ids)
+        r_shifts = RotatingShiftAssign.objects.all()
+        if start_date and employee_ids:
+            for employee, rshift in zip(employee_list, rotating_shift_obj_list):
+                if not r_shifts.filter(
+                    employee_id=employee, rotating_shift_id=rshift
+                ).exists():
+                    rot_shift_assign = RotatingShiftAssign()
+                    rot_shift_assign.employee_id = employee
+                    rot_shift_assign.rotating_shift_id = rshift
+                    rot_shift_assign.start_date = start_date
+                    rot_shift_assign.based_on = "after"
+                    rot_shift_assign.rotate_after_day = 1
+                    rot_shift_assign.next_change_date = start_date
+                    rot_shift_assign.next_shift = rshift.shift1
+                    rot_shift_assign.additional_data["next_shift_index"] = 1
+                    rotating_shift_assign_list.append(rot_shift_assign)
+                else:
+                    error_message = f"Rotating Shift with ID {rshift.name} is already assigned to employee {employee}"
+                    for row in work_info_dicts:
+                        if row["Badge Id"] == employee.badge_id:
+                            row["Employee Error"] = error_message
+                            error_list.append(row)
+                            break
+
+        create_rotating_shift = (
+            not error_list or request.POST.get("create_rotating_shift") == "true"
+        )
+
+        if create_rotating_shift:
+            if rotating_shift_assign_list:
+                RotatingShiftAssign.objects.bulk_create(rotating_shift_assign_list)
+
+        flg = set()
+        unique_error_list = []
+
+        for row in error_list:
+            badge_id = row["Badge Id"]
+            if badge_id not in flg:
+                unique_error_list.append(row)
+                flg.add(badge_id)
+
+        if unique_error_list:
+            for item in unique_error_list:
+                for key, value in error_dict.items():
+                    if key in item:
+                        value.append(item[key])
+                    else:
+                        try:
+                            value.append(None)
+                        except:
+                            pass
+
+            keys_to_remove = [
+                key
+                for key, value in error_dict.items()
+                if all(v is None for v in value)
+            ]
+
+            for key in keys_to_remove:
+                del error_dict[key]
+            data_frame = pd.DataFrame(error_dict, columns=error_dict.keys())
+            error_count = len(unique_error_list)
+
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="ImportError.csv"'
+
+            data_frame.to_csv(response, index=False)
+            response["X-Error-Count"] = error_count
+            return response
+
+        return JsonResponse(
+            {
+                "Success": "Employees Imported Succefully",
+                "success_count": len(employee_list),
+            }
+        )
+    return HttpResponse("")
 
 
 def rotating_shift_assign_redirect(request, obj_id, employee_id):
@@ -5199,9 +5385,6 @@ def enable_account_block_unblock(request):
     return HttpResponse(status=405)
 
 
-from accessibility.accessibility import ACCESSBILITY_FEATURE
-
-
 @login_required
 @permission_required("employee.change_employee")
 def enable_profile_edit_feature(request):
@@ -6579,7 +6762,7 @@ def get_upcoming_holidays(request):
     """
     Retrieve and display a list of upcoming holidays for the current month and year.
     """
-    today = localdate()  # This accounts for timezone-aware dates
+    today = timezone.localdate()
     current_month = today.month
     current_year = today.year
     holidays = Holidays.objects.filter(
