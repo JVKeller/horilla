@@ -33,6 +33,7 @@ from base.methods import (
     paginator_qry,
     sortby,
 )
+from base.models import Company
 from employee.models import Employee, EmployeeWorkInformation
 from horilla.decorators import (
     hx_request_required,
@@ -97,7 +98,7 @@ from pms.models import (
     QuestionOptions,
     QuestionTemplate,
 )
-
+from base.methods import is_reportingmanager
 logger = logging.getLogger(__name__)
 
 
@@ -380,6 +381,7 @@ def kr_create_or_update(request, kr_id=None):
     Returns:
     Renders a form to create or update a Key Result.
     """
+    
     form = KRForm()
     kr = False
     key_result = False
@@ -397,7 +399,6 @@ def kr_create_or_update(request, kr_id=None):
                     % {"key_result": instance},
                 )
                 return HttpResponse("<script>window.location.reload()</script>")
-
         else:
             form = KRForm(request.POST)
             if form.is_valid():
@@ -408,7 +409,6 @@ def kr_create_or_update(request, kr_id=None):
                     % {"key_result": instance},
                 )
                 return HttpResponse("<script>window.location.reload()</script>")
-
     return render(request, "okr/key_result/real_kr_form.html", {"form": form})
 
 
@@ -2133,7 +2133,7 @@ def get_collegues(request):
             elif request.GET.get("data") == "keyresults":
                 employees_queryset = EmployeeKeyResult.objects.filter(
                     employee_objective_id__employee_id=employee
-                ).values_list("id", "key_result_id__title")
+                )
             # Convert QuerySets to a list
             employees = [(employee.id, employee) for employee in employees_queryset]
             context = {"employees": employees}
@@ -2733,11 +2733,19 @@ def create_period(request):
     This is an ajax method to return json response to create stage related
     to the project in the task-all form fields
     """
+    company_id = request.session.get("selected_company")
+    companies = (
+        Company.objects.filter(id=company_id)
+        if company_id != "all"
+        else Company.objects.all()
+    )
 
     if request.method == "GET":
-        form = PeriodForm()
+        form = PeriodForm(initial={"company_id": companies})
     if request.method == "POST":
-        form = PeriodForm(request.POST)
+        data = request.POST.copy()
+        data.setlist("company_id", list(companies.values_list("id", flat=True)))
+        form = PeriodForm(data)
         if form.is_valid():
             instance = form.save()
             return JsonResponse(

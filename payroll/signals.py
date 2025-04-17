@@ -15,10 +15,13 @@ def employeeworkinformation_pre_save(sender, instance, **_kwargs):
     This method is used to override the save method for EmployeeWorkInformation Model
     """
     active_employee = (
-        instance.employee_id if instance.employee_id.is_active == True else None
+        instance.employee_id
+        if instance.employee_id and instance.employee_id.is_active == True
+        else None
     )
     if active_employee is not None:
-        contract_exists = active_employee.contract_set.exists()
+        all_contracts = Contract.objects.entire()
+        contract_exists = all_contracts.filter(employee_id_id=active_employee).exists()
         if not contract_exists:
             contract = Contract()
             contract.contract_name = f"{active_employee}'s Contract"
@@ -50,12 +53,12 @@ def create_installments(sender, instance, created, **kwargs):
         loan.amount = instance.loan_amount
         loan.only_show_under_employee = True
         loan.is_fixed = True
+        loan.is_fixed = True
         loan.one_time_date = instance.provided_date
         loan.is_loan = True
-        loan.save()
         loan.include_active_employees = False
-        loan.specific_employees.add(instance.employee_id)
         loan.save()
+        loan.specific_employees.add(instance.employee_id)
         instance.allowance_id = loan
         super(LoanAccount, instance).save()
     else:

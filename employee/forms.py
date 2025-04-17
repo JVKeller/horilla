@@ -300,26 +300,8 @@ class EmployeeWorkInformationForm(ModelForm):
         """
 
         model = EmployeeWorkInformation
-        fields = (
-            "department_id",
-            "job_position_id",
-            "job_role_id",
-            "shift_id",
-            "work_type_id",
-            "employee_type_id",
-            "reporting_manager_id",
-            "company_id",
-            "location",
-            "email",
-            "mobile",
-            "date_joining",
-            "anniversary_date",
-            "contract_end_date",
-            "tags",
-            "basic_salary",
-            "salary_hour",
-        )
-        exclude = ("employee_id",)
+        fields = "__all__"
+        exclude = ("employee_id", "additional_info", "experience")
 
         widgets = {
             "date_joining": DateInput(attrs={"type": "date"}),
@@ -511,8 +493,11 @@ excel_columns = [
     ("employee_work_info__work_type_id", trans("Work Type")),
     ("employee_work_info__reporting_manager_id", trans("Reporting Manager")),
     ("employee_work_info__employee_type_id", trans("Employee Type")),
-    ("employee_work_info__location", trans("Work Location")),
+    ("employee_work_info__location", trans("Location")),
     ("employee_work_info__date_joining", trans("Date Joining")),
+    ("employee_work_info__basic_salary", trans("Basic Salary")),
+    ("employee_work_info__salary_hour", trans("Salary Hour")),
+    ("employee_work_info__contract_end_date", trans("Contract End Date")),
     ("employee_work_info__company_id", trans("Company")),
     ("employee_bank_details__bank_name", trans("Bank Name")),
     ("employee_bank_details__branch", trans("Branch")),

@@ -1042,13 +1042,6 @@ class Allowance(HorillaModel):
 
     def save(self):
         super().save()
-        if (
-            not self.include_active_employees
-            and not self.specific_employees.first()
-            and not self.is_condition_based
-        ):
-            self.include_active_employees = True
-            super().save()
 
 
 class Deduction(HorillaModel):
@@ -1331,13 +1324,6 @@ class Deduction(HorillaModel):
 
     def save(self):
         super().save()
-        if (
-            not self.include_active_employees
-            and not self.specific_employees.first()
-            and not self.is_condition_based
-        ):
-            self.include_active_employees = True
-            super().save()
 
 
 class Payslip(HorillaModel):
@@ -1443,9 +1429,9 @@ class Payslip(HorillaModel):
         if self.group_name:
             return self.group_name
         return (
-            f"Payslip {self.start_date} to {self.end_date}"
+            f"Payslip {self.start_date} to {self.end_date} for {self.employee_id}"
             if self.start_date != self.end_date
-            else f"Payslip for {self.start_date}"
+            else f"Payslip for {self.start_date} for {self.employee_id}"
         )
 
     def get_days_in_month(self):

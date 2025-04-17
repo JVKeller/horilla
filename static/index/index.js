@@ -324,7 +324,7 @@ function checkSequence(element) {
 
     if (
         stageOrder.indexOf(parseInt(stageId)) !=
-            stageOrder.indexOf(parseInt(preStageId)) + 1 &&
+        stageOrder.indexOf(parseInt(preStageId)) + 1 &&
         stage.type != "cancelled"
     ) {
         Swal.fire({
@@ -486,7 +486,7 @@ window.confirm = function (message) {
     });
 };
 
-function handleHtmxTarget(event, path , verb){
+function handleHtmxTarget(event, path, verb) {
     var targetElement;
     var hxTarget = $(event.target).attr("hx-target");
     if (hxTarget) {
@@ -567,6 +567,12 @@ $(document).on("htmx:beforeRequest", function (event, data) {
         ) {
             target.html(`<div class="animated-background"></div>`);
         }
+    }
+});
+
+$(document).on('click', '.select2-selection__choice__remove', function (event) {
+    if ($('[role="tooltip"]:visible').length) {
+        $('[role="tooltip"]').hide();
     }
 });
 
@@ -706,3 +712,18 @@ $(document).on("click", function (event) {
 function submitForm(elem) {
     $(elem).siblings(".add_more_submit").click();
 }
+
+$(document).on('htmx:afterSwap', function () {
+    if ( $('[data-summernote]').length > 0 ) {
+        $('[data-summernote]').summernote({
+            height: 300,
+            codeviewFilter: false,
+            codeviewIframeFilter: false,
+            callbacks: {
+                onChange: function(contents) {
+                    $('[name="body"]').val(contents);
+                }
+            }
+        });
+    }
+});
